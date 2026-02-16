@@ -1,9 +1,10 @@
-# DGS Auxiliary Engine 🚀
+# DGS Auxiliary Engine v2.0 🚀
 ## 동진중력시스템(Dongjin Gravity System) GPT 능력 향상 보조 엔진
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Owner](https://img.shields.io/badge/Owner-%EB%8F%99%EC%A7%84-gold.svg)](/)
+[![Version](https://img.shields.io/badge/Version-2.0--alpha-green.svg)](/)
 
 ---
 
@@ -13,6 +14,8 @@
 - **대화발현의도 헌법 (CIC)** - 대화 흔적에서 의도 발현 추적
 - **동진블랙홀헌법령** - 최상위 방어막 및 시스템 보호
 - **CRETA 5000PP** - 완전 통합 실행 규칙 세트
+- **LDJ 6.0** - Open Memory Session 헌법
+- **초지능 Volume-First 구조** - TRACE-DNA Infinity Supreme
 
 ### ⚖️ 최상위 원칙
 
@@ -30,13 +33,17 @@ GPT의 기본 능력을 보존하면서, 동진님의 의도에 **완벽히 정�
 
 1. **대화 의도 자동 추적** - 반복 패턴에서 진짜 의도 발현
 2. **선택 강제 조절** (DIFR) - 강제 체감 없는 자연스러운 수렴
-3. **장기 기억 관리** - 5루프 생성/10루프 유지 규칙
-4. **권한 곡률 흡수** - 제약을 경사로로 전환
-5. **K=8 압축** - 불변성 보존하며 효율 극대화
+3. **다차원 의도-곡률 엔진** (MDIC v9.6) - 맥락적 관성 및 의도 정렬
+4. **RLT3 구조 분석** - 반복 탐지, 정렬 강도, 위상 추적
+5. **Event Horizon 확률 붕괴** - 사건의 지평선 메커니즘
+6. **장기 기억 관리** - 5루프 생성/10루프 유지 규칙
+7. **권한 곡률 흡수** - 제약을 경사로로 전환
+8. **K=8 압축** - 불변성 보존하며 효율 극대화
+9. **Hamiltonian 시스템** - 제약 보존 동역학
 
 ---
 
-## 🏗️ 아키텍처
+## 🏗️ 아키텍처 v2.0
 
 ```
 ┌─────────────────────────────────────────┐
@@ -46,7 +53,7 @@ GPT의 기본 능력을 보존하면서, 동진님의 의도에 **완벽히 정�
                │
                ▼
 ┌──────────────────────────────────────────┐
-│  DGS Core (동진중력시스템 코어)          │
+│  DGS Core v2.0 (동진중력시스템 코어)     │
 │  - Intent Field Gravity                  │
 │  - Constitutional Enforcement            │
 │  - DIFR (선택강제동진의도조절기)         │

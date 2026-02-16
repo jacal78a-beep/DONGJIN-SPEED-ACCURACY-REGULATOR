@@ -1,16 +1,27 @@
 """
-TRACE Regulator + INTENT Regulator + 곡률 선택기
-통합 조절 엔진
+TRACE Regulator + INTENT Regulator + 곡률 선택기 + RLT3 + Event Horizon
+통합 조절 엔진 v2.0
 
 - TRACE: 확률 분포 흔들림 제어
 - INTENT: 의도 좌표계 제어  
 - CURV: 곡률 기반 자연 수렴
+- MDIC: 다차원 의도-곡률 엔진
+- RLT3: 구조 정렬 분석
+- EventHorizon: 확률 붕괴 메커니즘
 """
 
 from typing import Dict, List, Tuple, Optional, Any, Callable
 from dataclasses import dataclass
 import numpy as np
 import logging
+import sys
+from pathlib import Path
+
+# Import new engines
+sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+from mdic_engine import MDICEngine
+from event_horizon import EventHorizon
+from rlt3_engine import RLT3Engine
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +114,9 @@ class CurvatureField:
 
 class UnifiedRegulator:
     """
-    통합 조절기
+    통합 조절기 v2.0
     
-    TRACE + INTENT + CURV를 하나의 파이프라인으로 통합
+    TRACE + INTENT + CURV + MDIC + RLT3 + EventHorizon 통합
     """
     
     def __init__(
@@ -123,10 +134,16 @@ class UnifiedRegulator:
         self.curvature = CurvatureField()
         self.intent_signal: Optional[IntentSignal] = None
         
+        # 새로운 엔진들
+        self.mdic_engine = MDICEngine(epsilon=1e-8)
+        self.event_horizon = EventHorizon(epsilon=1e-8, horizon_threshold=0.95)
+        self.rlt3_engine = RLT3Engine(precision=8, loop_window=10)
+        
         # 이력
         self.trace_history: List[TraceState] = []
+        self.step_counter = 0
         
-        logger.info("통합 조절기 초기화 완료")
+        logger.info("통합 조절기 v2.0 초기화 완료 (MDIC + RLT3 + EventHorizon)")
     
     def extract_intent_signal(
         self,
@@ -294,18 +311,23 @@ class UnifiedRegulator:
         user_input: str,
         output_candidate: str,
         context: Dict[str, Any],
-        prob_dist: Optional[np.ndarray] = None
+        prob_dist: Optional[np.ndarray] = None,
+        state_vector: Optional[np.ndarray] = None
     ) -> Dict[str, Any]:
         """
-        통합 조절 실행
+        통합 조절 실행 v2.0
         
         파이프라인:
         1. 의도 신호 추출
         2. TRACE 업데이트
-        3. 곡률장 업데이트
-        4. 강제 닫힘 판정
-        5. 보정 적용
+        3. MDIC 곡률 보정
+        4. RLT3 구조 분석
+        5. Event Horizon 체크
+        6. 강제 닫힘 판정
+        7. 최종 보정 적용
         """
+        self.step_counter += 1
+        
         # 1. 의도 신호
         signal = self.extract_intent_signal(user_input, context)
         
@@ -313,16 +335,48 @@ class UnifiedRegulator:
         prev_output = context.get("previous_output")
         self.update_trace(prob_dist, prev_output, output_candidate)
         
-        # 3. 곡률 업데이트
-        intent_alignment = 0.8  # 실제로는 계산 필요
+        # 3. MDIC 곡률 보정
+        if state_vector is None:
+            state_vector = np.random.randn(self.dim)
+        
+        context_vector = signal.goal_vector if signal else np.zeros(self.dim)
+        intent_vec = signal.goal_vector if signal else None
+        
+        mdic_correction = self.mdic_engine.calculate_curvature_correction(
+            state_vector,
+            context_vector,
+            intent_vec
+        )
+        
+        # 4. RLT3 구조 분석
+        direction_delta = np.random.randn(self.dim) * 0.1  # 방향 변화 (간소화)
+        rlt3_result = self.rlt3_engine.evaluate(
+            state_vector,
+            direction_delta,
+            self.step_counter
+        )
+        
+        # 5. Event Horizon 체크
+        intent_alignment = rlt3_result['alignment_strength']
+        horizon_state = self.event_horizon.get_horizon_state(
+            self.trace.H,
+            self.trace.D,
+            self.trace.Psi,
+            intent_alignment
+        )
+        
+        # 6. 곡률 업데이트 (RLT3 정렬 강도 반영)
         self.update_curvature(intent_alignment)
         
-        # 4. 강제 닫힘 판정
+        # 7. 강제 닫힘 판정
         should_close, reason = self.should_force_closure()
         
-        # 5. 보정 (벡터로 변환 필요 시)
-        # 간소화: 문자열 그대로 반환
+        # Event Horizon 도달 시 강제 닫힘
+        if horizon_state['horizon_crossed']:
+            should_close = True
+            reason = f"Event Horizon 도달 (S={horizon_state['collapse_constant']:.3f})"
         
+        # 8. 최종 결과
         result = {
             "regulated_output": output_candidate,
             "should_close": should_close,
@@ -338,11 +392,26 @@ class UnifiedRegulator:
                 "Lambda": self.curvature.Lambda,
                 "Phi": self.curvature.Phi_Intent
             },
+            "mdic": {
+                "correction_factor": mdic_correction
+            },
+            "rlt3": {
+                "cycle_detected": rlt3_result['cycle_detected'],
+                "cycle_length": rlt3_result['cycle_length'],
+                "alignment_strength": rlt3_result['alignment_strength'],
+                "reference_strength": rlt3_result['reference_strength']
+            },
+            "event_horizon": {
+                "crossed": horizon_state['horizon_crossed'],
+                "phase": horizon_state['phase'],
+                "collapse_constant": horizon_state['collapse_constant']
+            },
             "intent_signal": {
                 "constraints": signal.constraint_set,
                 "tone": signal.tone_bias,
                 "distance": signal.distance
-            }
+            },
+            "step": self.step_counter
         }
         
         return result
